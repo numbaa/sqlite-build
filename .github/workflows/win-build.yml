@@ -1,6 +1,4 @@
 name: Windows
-permissions:
-  contents: write
 on: workflow_dispatch
 jobs:
   build:
