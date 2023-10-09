@@ -2,6 +2,8 @@ name: Windows
 on: workflow_dispatch
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: windows-2022
     steps:
       - name: Checkout tcltk/tcl
