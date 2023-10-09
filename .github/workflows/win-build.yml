@@ -35,15 +35,12 @@ jobs:
         run: |
           cd ./sqlite
           nmake /f makefile.msc dll
-      - name: Generate sha
-        run: echo ${{ github.sha }} > Release.txt
+      - name: Generate zip
+        run: |
+          echo ${{ github.sha }} > Release.txt
+          Compress-Archive -Path ./sqlite/sqlite3.h,./sqlite/sqlite3.dll,./sqlite/sqlite3.lib,./sqlite/sqlite3.pdb,./Release.txt -DestinationPath sqlite3.zip
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            ./sqlite/sqlite3.h
-            ./sqlite/sqlite3.dll
-            ./sqlite/sqlite3.lib
-            ./sqlite/sqlite3.pdb
-            ./Release.txt
+          files: sqlite3.zip
           
