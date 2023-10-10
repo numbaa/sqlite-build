@@ -6,6 +6,10 @@ jobs:
       contents: write
     runs-on: windows-2022
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: sqlite-build
       - name: Checkout tcltk/tcl
         uses: actions/checkout@v4
         with:
@@ -36,7 +40,7 @@ jobs:
       - name: Generate zip
         run: |
           echo ${{ github.sha }} > Release.txt
-          Compress-Archive -Path ./sqlite/sqlite3.h,./sqlite/sqlite3.dll,./sqlite/sqlite3.lib,./sqlite/sqlite3.pdb,./Release.txt -DestinationPath sqlite3.zip
+          Compress-Archive -Path ./sqlite/sqlite3.h,./sqlite/sqlite3.dll,./sqlite/sqlite3.lib,./sqlite/sqlite3.pdb,./Release.txt,./sqlite-build/CMakeLists.txt -DestinationPath sqlite3.zip
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
