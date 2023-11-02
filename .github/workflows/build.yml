@@ -82,7 +82,7 @@ jobs:
           cp Release.txt ./sqlite/build/install/lib
           cp ./sqlite/build/sqlite3.h ./sqlite/build/install/lib
           cp ./sqlite-build/CMakeLists.txt ./sqlite/build/install/lib
-          tar -czvf sqlite3.linux.${{}}.tar.gz -C ./sqlite/build/install/lib .
+          tar -czvf sqlite3.linux.${{ github.ref_name }}.tar.gz -C ./sqlite/build/install/lib .
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
