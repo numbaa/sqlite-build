@@ -1,0 +1,90 @@
+name: Build
+on: workflow_dispatch
+jobs:
+  Windows:
+    permissions:
+      contents: write
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: sqlite-build
+      - name: Checkout tcltk/tcl
+        uses: actions/checkout@v4
+        with:
+          repository: tcltk/tcl
+          ref: core-8-6-13
+          path: tcl
+      - name: Checkout sqlite
+        uses: actions/checkout@v4
+        with:
+          repository: sqlite/sqlite
+          ref: version-3.43.1
+          path: sqlite
+      - name: Init MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build tcl
+        run: |
+          cd ./tcl/win
+          nmake -f makefile.vc release
+          nmake /f makefile.vc INSTALLDIR=./install install
+          copy install/lib/tcl86t.lib install/lib/tcl86.lib
+          copy install/bin/tclsh86t.exe install/bin/tclsh.exe
+          echo "$GITHUB_WORKSPACE/tcl/install/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $Env:TCLDIR = "$GITHUB_WORKSPACE/tcl/install"
+      - name: Build sqlite
+        run: |
+          cd ./sqlite
+          nmake /f makefile.msc dll
+      - name: Generate zip
+        run: |
+          echo ${{ github.sha }} > Release.txt
+          Compress-Archive -Path ./sqlite/sqlite3.h,./sqlite/sqlite3.dll,./sqlite/sqlite3.lib,./sqlite/sqlite3.pdb,./Release.txt,./sqlite-build/CMakeLists.txt -DestinationPath sqlite3.win.${{ github.ref_name }}.zip
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: sqlite3.win.${{ github.ref_name }}.zip
+
+  Linux:
+    permissions:
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: sqlite-build
+      - name: Checkout sqlite
+        uses: actions/checkout@v4
+        with:
+          repository: sqlite/sqlite
+          ref: version-3.43.1
+          path: sqlite
+      - name: Install deps
+        run: |
+          sudo apt-get -y install tk-dev gcc-10 g++-10
+          alias gcc='gcc-10'
+          alias g++='g++-10'
+          export CC=`which gcc-10`
+          export CXX=`which gcc-10`
+      - name: Build
+        run: |
+          cd sqlite
+          mkdir build
+          cd build
+          ../configure --prefix `pwd`/install
+          make -j2
+          make lib_install
+      - name: Generate tar
+        run: |
+          echo ${{ github.sha }} > Release.txt
+          cp Release.txt ./sqlite/build/install/lib
+          cp ./sqlite/build/sqlite3.h ./sqlite/build/install/lib
+          cp ./sqlite-build/CMakeLists.txt ./sqlite/build/install/lib
+          tar -czvf sqlite3.linux.${{}}.tar.gz -C ./sqlite/build/install/lib .
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: sqlite3.linux.${{ github.ref_name }}.tar.gz
+          
