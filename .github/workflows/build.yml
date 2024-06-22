@@ -87,4 +87,39 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: sqlite3.linux.${{ github.ref_name }}.tar.gz
+
+  macOS:
+    permissions:
+      contents: write
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: sqlite-build
+      - name: Checkout sqlite
+        uses: actions/checkout@v4
+        with:
+          repository: sqlite/sqlite
+          ref: version-3.43.1
+          path: sqlite
+      - name: Build
+        run: |
+          cd sqlite
+          mkdir build
+          cd build
+          ../configure --prefix `pwd`/install
+          make -j2
+          make lib_install
+      - name: Generate tar
+        run: |
+          echo ${{ github.sha }} > Release.txt
+          cp Release.txt ./sqlite/build/install/lib
+          cp ./sqlite/build/sqlite3.h ./sqlite/build/install/lib
+          cp ./sqlite-build/CMakeLists.txt ./sqlite/build/install/lib
+          tar -czvf sqlite3.mac.${{ github.ref_name }}.tar.gz -C ./sqlite/build/install/lib .
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: sqlite3.mac.${{ github.ref_name }}.tar.gz
           
